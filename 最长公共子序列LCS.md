@@ -13,34 +13,46 @@ X和Y的最长公共子序列为：BCBA
 
 因此可以拆分为子问题的最优解，终止条件就是当遍历到某一个字符串的0位置也就是开头位置时，终止遍历。
 同时动态规划问题需要构建空间表结构，针对这个问题，我们构建原则如下：（图来自网上博客）
-
+![avatar](https://github.com/coderGray1296/code/blob/master/pictures/LCS.png?raw=true)
+图片中的箭头表示的是三种情况，左上表示xi=yi；上表示Z2>Z1；左表示Z1>Z2。我们的程序中则考虑将这三种情况保存在一个一个空间矩阵中，0为第一种情况，1为Z1>Z2，2为Z2>=Z1，**注意这个等号放在情况2还是情况3，将影响我们的结果**，代码之后会分析
+图中的数字就是最长的长度记录，用C[i][j]来表示吧！～具体的看代码：
 ```
-# Definition for singly-linked list.
-class ListNode(object):
-     def __init__(self, x):
-         self.val = x
-         self.next = None
-
 class Solution(object):
-    def mergeTwoLists(self, l1, l2):
-        """
-        :type l1: ListNode
-        :type l2: ListNode
-        :rtype: ListNode
-        """
-        if not l1 or not l2:
-            return l2 or l1
-        if l1.val < l2.val:
-            l1.next = self.mergeTwoLists(l1.next, l2)
-            return l1
+    def LCS(self, X, Y):
+        size_x = len(X)
+        size_y = len(Y)
+        c = np.zeros((size_x + 1, size_y + 1), dtype=int)
+        flag = np.zeros((size_x + 1, size_y + 1), dtype=int)
+        for i in range(1, size_x+1):
+            for j in range(1, size_y+1):
+                if X[i-1] == Y[j-1]:
+                    c[i][j] = c[i-1][j-1] + 1
+                    flag[i][j] = 0
+                elif c[i][j-1] < c[i-1][j]:
+                    c[i][j] = c[i-1][j]
+                    flag[i][j] = 1
+                else:
+                    c[i][j] = c[i][j-1]
+                    flag[i][j] = 2
+        self.get_char(size_x, size_y, flag, X)
+
+    def get_char(self, i, j, flag, X):
+        if i == 0 or j == 0:
+            return 1
+        if flag[i][j] == 0:
+            self.get_char(i-1, j-1, flag, X)
+            print(X[i-1])
+        elif flag[i][j] == 1:
+            self.get_char(i-1, j, flag, X)
         else:
-            l2.next = self.mergeTwoLists(l1, l2.next)
-            return l2
-
+            self.get_char(i, j-1, flag, X)
+        return 1
 ```
-这种方法直接判断两个链表当前节点的大小，因为链表当前的节点肯定是在每个链表中val最小的，是后加入的指向别的链表的。
-- 如果l1当前的val小于l2当前的val：那么就将l1当前节点的next指向递归(l1.next,l2)的结果，这里递归的理解是已经判断了l1小于l2，但是还需要看l1的next和当前l2的大小，如果l1的next也小于l2那么l2很可能要接在l1.next的后面，具体还要看l1.next.next和l2的大小情况。这种情况是以l1为主链将l2插进来，因此最后要返回l1作为合成链。
-- 反之，亦然。
-
-## 总结：
-总结起来就是自己对于递归的理解还是比较浅，可能是刚开始刷题的原因，之后遇到此类相似的问题要考虑去构造这种递归的方法，简介快速。
+结果如下：
+```
+B
+D
+A
+B
+```
+看我们的结果，BDAB确实成立，但是我们看开头的例子结果确实BCBA也是成立的，这个原因就在于之前说的**等号取在哪个情况**。由于这个问题较为特殊，从最后一个字符开始，B不等于A因此比较Z1和Z2，发现Z1=Z2（当然这是递归的过程程序并不知道，我们马后炮一下）。而我们的标准将它定为情况3，所以取Z1，因此相当于按照X优先取的，所以结果不一样。
