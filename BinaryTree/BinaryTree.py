@@ -7,9 +7,9 @@ class Node():
 class BinaryTree():
     '''
     - 创建二叉树，完成
-    - 添加元素
+    - 添加元素(广度，先序(带#标示)，前+中，中+后)
     - 广度遍历
-    - 深度遍历(先序遍历，中序遍历，后序遍历)
+    - 深度遍历(先序遍历，中序遍历，后序遍历)递归和非递归
     '''
     def __init__(self):
         self.root = None
@@ -77,6 +77,20 @@ class BinaryTree():
         self.recursion_vlr(root.left)
         self.recursion_vlr(root.right)
 
+    #通过栈非递归进行先序遍历
+    def pre_order_stack(self, root):
+        if root is None:
+            return
+        mystack = []
+        node = root
+        while mystack or node:
+            while node:
+                print(node.val)
+                mystack.append(node)
+                node = node.left
+            node = mystack.pop()
+            node = node.right
+
     #通过递归进行中序遍历
     def recursion_lvr(self, root):
         if root is None:
@@ -85,6 +99,20 @@ class BinaryTree():
         print(root.val)
         self.recursion_lvr(root.right)
 
+    #通过栈非递归进行中序遍历
+    def mid_order_stack(self, root):
+        if root is None:
+            return
+        mystack = []
+        node = root
+        while mystack or node:
+            while node:
+                mystack.append(node)
+                node = node.left
+            node = mystack.pop()
+            print(node.val)
+            node = node.right
+
     #通过递归进行后序遍历
     def recursion_lrv(self, root):
         if root is None:
@@ -92,6 +120,25 @@ class BinaryTree():
         self.recursion_lrv(root.left)
         self.recursion_lrv(root.right)
         print(root.val)
+
+    #通过栈非递归进行后序遍历，先遍历右子树，在遍历左子树，最后逆序数出
+    def post_order_stack(self, root):
+        if root is None:
+            return
+        mystack1 = []
+        #stack2是为了逆序输出，全都存在2栈中，1栈的作用是按照右、左的顺序遍历节点存入2栈
+        mystack2 = []
+        node = root
+        while mystack1 or node:
+            while node:
+                mystack2.append(node)
+                mystack1.append(node)
+                node = node.right
+            node = mystack1.pop()
+            node = node.left
+        while mystack2:
+            print(mystack2.pop().val)
+
 
     #利用队列进行广度优先遍历BFS
     def level_scan(self):
@@ -117,5 +164,8 @@ pre_order = [1, 2, 4, 7, 3, 5, 6, 8]
 mid_order = [4, 7, 2, 1, 5, 3, 8, 6]
 post_order = [7, 4, 2, 5, 8, 6, 3, 1]
 #b.create_tree(pre_order, mid_order)
-b.construct_tree(mid_order, post_order)
-b.recursion_vlr(b.root)
+#b.construct_tree(mid_order, post_order)
+#b.recursion_vlr(b.root)
+#b.pre_order_stack(b.root)
+#b.mid_order_stack(b.root)
+#b.post_order_stack(b.root)
