@@ -1,4 +1,6 @@
 class Sort():
+    def __init__(self):
+        self.heap_len = 0
     '''
     实现各种排序算法
     - 冒泡排序
@@ -68,8 +70,96 @@ class Sort():
                             k -= increasement
                         arr[k] = current
         return arr
+    #快速排序
+    def QuickSort(self, arr, start, end):
+        if start >= end:
+            return
+        i = start
+        j = end
+        baseline = arr[start]
+        while i < j:
+            while i < j and arr[j] >= baseline:
+                j -= 1
+            if i < j:
+                arr[i] = arr[j]
+                i += 1
+            while i < j and arr[i] < baseline:
+                i += 1
+            if i < j:
+                arr[j] = arr[i]
+                j -= 1
+        arr[i] = baseline
+        self.QuickSort(arr, start, i-1)
+        self.QuickSort(arr, i+1, end)
+        return arr
 
+    #归并排序(2-路分治)
+    def MergeSort(self, arr):
+        if len(arr) < 2:
+            return arr
+        mid = len(arr) // 2
+        left = arr[:mid]
+        right = arr[mid:]
+        return self.merge(self.MergeSort(left), self.MergeSort(right))
+
+    def merge(self, left, right):
+        result = []
+        length = len(left) + len(right)
+        i = 0
+        j = 0
+        for index in range(0, length):
+            if i >= len(left):
+                result.append(right[j])
+                j += 1
+            elif j >= len(right):
+                result.append(left[i])
+                i += 1
+            elif left[i] > right[j]:
+                result.append(right[j])
+                j += 1
+            else:
+                result.append(left[i])
+                i += 1
+        return result
+
+    #堆排序
+    def HeapSort(self, arr):
+        self.heap_len = len(arr)
+        if self.heap_len < 1:
+            return arr
+        #构建一个最大堆
+        self.buildMaxHeap(arr)
+        #循环将首位(最大值)与末位交换，然后重新调整最大堆
+        while self.heap_len > 0:
+            self.swap(arr, 0, self.heap_len - 1)
+            self.heap_len -= 1
+            self.adjust(arr, 0)
+        return arr
+
+    #建立最大堆
+    def buildMaxHeap(self, arr):
+        #利用完全二叉树的性质，从最后一个非叶子结点开始向上构造最大堆
+        for i in range(self.heap_len // 2, -1, -1):
+            self.adjust(arr, i)
+    #调整使之成为最大堆
+    def adjust(self, arr, i):
+        maxIndex = i
+        #如果有左子树，而且左子树大于父节点，将最大指针指向左子树
+        if 2 * i < self.heap_len and arr[2 * i] > arr[maxIndex]:
+            maxIndex = 2 * i
+        # 如果有右子树，而且右子树大于父节点，将最大指针指向右子树
+        if 2 * i + 1 < self.heap_len and arr[2 * i + 1] > arr[maxIndex]:
+            maxIndex = 2 * i + 1
+        #如果父节点不是最大值，则将父节点与最大值交换，并且递归调整与父节点交换的位置
+        if maxIndex != i:
+            self.swap(arr, maxIndex, i)
+            self.adjust(arr, maxIndex)
+
+    def swap(self, arr, i, j):
+        temp = arr[j]
+        arr[j] = arr[i]
+        arr[i] = temp
 
 
 s = Sort()
-print(s.ShellSort([4,2,8,0,5,1]))
+print(s.HeapSort([4,2,8,5,0,1]))
