@@ -129,7 +129,7 @@ b = b - a*db
 
 4. **LR模型的优化，加入正则项** 当模型的参数过多时，很容易遇到过拟合的问题。这时就需要有一种方法来控制模型的复杂度，典型的做法在优化目标中加入正则项，通过惩罚过大的参数来防止过拟合。引入正则项的LR目标函数： ![avatar](https://github.com/coderGray1296/code/blob/master/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%A4%8D%E4%B9%A0/pictures/lr_13.png)
 一般情况下，取p=1或p=2，分别对应L1，L2正则化，两者的区别可以从下图中看出来，L1正则化（左图）倾向于使参数变为0，因此能产生稀疏解。如果是圆，则很容易切到圆周的任意一点，但是很难切到坐标轴上，这样就得不出稀疏的解，冗余数据就会相对较多!但如果是菱形或者多边形，则很容易切到坐标轴上，因此很容易产生稀疏的结果 [avatar](https://github.com/coderGray1296/code/blob/master/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%A4%8D%E4%B9%A0/pictures/lr_14.png)
-**实际应用时，由于我们数据的维度可能非常高，L1正则化因为能产生稀疏解，使用的更为广泛一些。**
+**实际应用时，由于我们数据的维度可能非常高，L1正则化因为能产生稀疏解，使用的更为广泛一些。** [LR正则总结](https://www.cnblogs.com/pinard/p/6035872.html)
 
 5. **LR如何解决多分类问题？** 简言之，把Sigmoid函数换成softmax函数，即可适用于多分类的场景。
 Softmax 回归是直接对逻辑回归在多分类的推广，相应的模型也可以叫做多元逻辑回归（Multinomial Logistic Regression）。有以下的概率分布和损失函数：![avatar](https://github.com/coderGray1296/code/blob/master/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%A4%8D%E4%B9%A0/pictures/lr_15.png)![avatar](https://github.com/coderGray1296/code/blob/master/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%A4%8D%E4%B9%A0/pictures/lr_16.png)
