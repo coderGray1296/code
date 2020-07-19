@@ -91,3 +91,46 @@ XGboost 的正则化剪枝操作：
 ![avatar](https://github.com/coderGray1296/code/blob/master/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%A4%8D%E4%B9%A0/pictures/XGB_1.png)
 
 这个公式形式上跟ID3算法、CART算法是一致的，都是用分裂后的某种值减去分裂前的某种值，从而得到增益。为了限制树的生长，我们可以加入阈值，**当增益大于阈值时才让节点分裂，上式中的gamma即阈值**，它是正则项里叶子节点数T的系数，所以**xgboost在优化目标函数的同时相当于做了预剪枝**。另外，上式中还有一个系数lambda，是正则项里leaf score的L2模平方的系数，对leaf score做了平滑，也起到了防止过拟合的作用，这个是传统GBDT里不具备的特性。
+
+
+##### LightGBM
+它是微软出的新的boosting框架，基本原理与XGBoost一样，使用基于学习算法的决策树，只是在框架上做了一优化（重点在模型的训练速度的优化）。最主要的是LightGBM使用了基于直方图的决策树算法，基本思想是先把连续的浮点特征值离散化成k个整数，同时构造一个宽度为k的直方图。在遍历数据的时候，根据离散化后的值作为索引在直方图中累积统计量，当遍历一次数据后，直方图累积了需要的统计量，当遍历一次数据后，直方图累积了需要的统计量，然后根据直方图的离散值，遍历寻找最优的分割点。
+
+LightGBM原理和XGBoost类似，通过损失函数的泰勒展开式近似表达残差（包含了一阶和二阶导数信息），另外利用正则化项控制模型的复杂度。但是LightGBM最大的优点是：
+- 通过使用leaf-wise分裂策略代替XGBoost的level-wise分裂策略，通过只选择分裂增益最大的结点进行分裂，避免了某些结点增益较小带来的开销。
+- 另外LightGBM通过使用基于直方图的决策树算法，只保存特征离散化之后的值，代替XGBoost使用exact算法中使用的预排序算法（预排序算法既要保存原始特征的值，也要保存这个值所处的顺序索引），减少了内存的使用，并加速的模型的训练速度。
+
+###### leaf-wise 分裂策略
+1.XGBoost的level-wise分类策略
+
+![avatar](https://github.com/coderGray1296/code/blob/master/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%A4%8D%E4%B9%A0/pictures/light_1.png)
+
+level-wise是指对每一层所有结点做无差别分裂，尽管部分结点的增益比较小，依然会进行分裂，带来了没必要的开销。
+
+2.LightGBM的leaf-wise分裂策略
+
+![avatar](https://github.com/coderGray1296/code/blob/master/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%A4%8D%E4%B9%A0/pictures/light_2.png)
+
+Leaf-wise 则是一种更为高效的策略，每次从当前所有叶子中，找到分裂增益最大的一个叶子，然后分裂，如此循环。因此同 Level-wise 相比，在分裂次数相同的情况下，Leaf-wise 可以降低更多的误差，得到更好的精度。Leaf-wise 的缺点是可能会长出比较深的决策树，产生过拟合。因此 LightGBM 在 Leaf-wise 之上增加了一个最大深度的限制，在保证高效率的同时防止过拟合。
+
+###### 基于直方图的排序算法-Histogram算法
+直方图算法的基本思想是先把连续的浮点特征值离散化成k个整数，同时构造一个宽度为k的直方图。在遍历数据的时候，根据离散化后的值作为索引在直方图中累积统计量，当遍历一次数据后，直方图累积了需要的统计量，然后根据直方图的离散值，遍历寻找最优的分割点。
+
+![avatar](https://github.com/coderGray1296/code/blob/master/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%A4%8D%E4%B9%A0/pictures/light_3.png)
+
+使用直方图的优点：
+1. 明显减少内存的使用，因为直方图不需要额外存储预排序的结果，而且可以只保存特征离散化后的值。![avatar](https://github.com/coderGray1296/code/blob/master/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%A4%8D%E4%B9%A0/pictures/light_4.png)
+
+2. 遍历特征值时，不需要像XGBoost一样需要计算每次分裂的增益，而是对每个特征只需要计算建立直方图的个数，即k次，时间复杂度由O(#data * #feature)优化到O(k * #feature)。（由于决策树本身是弱分类器，分割点是否精确并不是太重要，因此直方图算法离散化的分割点对最终的精度影响并不大。另外直方图由于取的是较粗略的分割点，因此不至于过度拟合，起到了正则化的效果；同时在Gradient Boosting框架下精度不会有太大的影响）
+3. LightGBM的直方图能做差加速。一个叶子的直方图可以由它的父亲结点的直方图与它兄弟的直方图做差得到。构造的直方图本来需要遍历该叶子结点上所有数据，但是直方图做差仅需遍历直方图的k个桶即可（即直方图区间），速度上可以提升一倍。如下图：![avatar](https://github.com/coderGray1296/code/blob/master/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%A4%8D%E4%B9%A0/pictures/light_5.png)
+
+###### 支持类别特征和高效并行处理
+**直接支持类别特征，不需要做one-hot编码**。大多数机器学习都无法直接支持类别特征，一般需要把类别进行特征编码，这样就降低了空间和时间的效率。但是LightGBM可以在对离散特征分裂时，每个取值都当作一个桶，分裂时的增益为“是否属于某个类别category”的gain。
+
+**支持高效并行：包括特征并行和数据并行。（减少的是分割数据的时间，而不是模型训练的时间）**：
+- 特征并行：即在不同机器上在不同的特征集上分别寻找最优的分割点，然后在机器间同步最优的分割点。其通过本地保存全部数据避免对数据切分结果的通信。![avatar](https://github.com/coderGray1296/code/blob/master/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%A4%8D%E4%B9%A0/pictures/light_6.png)
+
+- 数据并行：即让不同的机器先在本地构造直方图，然后进行全局的合并，最后在合并的直方图上面寻找最优分割点。其使用分散规约（Reduce scatter）把直方图合并的任务分摊到不同的机器上，降低了通信量，并利用直方图做差，减少了通信量，即减少了通信时间。**在数据量很大的时候，使用投票并行可以得到非常好的加速效果**。![avatar](https://github.com/coderGray1296/code/blob/master/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%A4%8D%E4%B9%A0/pictures/light_7.png)
+![avatar](https://github.com/coderGray1296/code/blob/master/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%A4%8D%E4%B9%A0/pictures/light_8.png)
+
+[LightGBM实战代码](https://blog.csdn.net/weixin_39807102/article/details/81912566)
