@@ -48,7 +48,7 @@ OK，那我们接下来就可以看看 Skip-gram 的网络结构了，x 就是�
 ##### 2.3 CBOW 更一般的情况
 跟 Skip-gram 相似，只不过: **Skip-gram 是预测一个词的上下文，而 CBOW 是用上下文预测这个词**
 
-![avatar](https://github.com/coderGray1296/code/blob/master/NLP%E5%A4%8D%E4%B9%A0/pictures/word2vec_3.png)
+![avatar](https://github.com/coderGray1296/code/blob/master/NLP%E5%A4%8D%E4%B9%A0/pictures/word2vec_3.jpg)
 
 更 Skip-gram 的模型并联不同，这里是输入变成了多个单词，所以要对输入处理下（**一般是求和然后平均**），输出的 cost function 不变
 
