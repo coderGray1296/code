@@ -26,3 +26,32 @@ Word2vec 正是来源于这个思想，**但它的最终目的，不是要把 f 
 ```
 答案是：One-hot编码
 ```
+举个例子，假设全世界所有的词语总共有 V 个，这 V 个词语有自己的先后顺序，假设『吴彦祖』这个词是第1个词，『我』这个单词是第2个词，那么『吴彦祖』就可以表示为一个 V 维全零向量、把第1个位置的0变成1，而『我』同样表示为 V 维全零向量、把第2个位置的0变成1。这样，每个词语都可以找到属于自己的唯一表示。
+
+OK，那我们接下来就可以看看 Skip-gram 的网络结构了，x 就是上面提到的 one-hot encoder 形式的输入，y 是在这 V 个词上输出的概率，我们希望跟真实的 y 的 one-hot encoder 一样。
+
+![avatar](https://github.com/coderGray1296/code/blob/master/NLP%E5%A4%8D%E4%B9%A0/pictures/word2vec_1.png)
+
+首先说明一点：**隐层的激活函数其实是线性的**，相当于没做任何处理（这也是 Word2vec 简化之前语言模型的独到之处），我们要训练这个神经网络，用反向传播算法，本质上是链式求导，在此不展开说明了
+
+当模型训练完后，最后得到的其实是**神经网络的权重**，比如现在输入一个 x 的 one-hot encoder: [1,0,0,…,0]，对应刚说的那个词语『吴彦祖』，则在输入层到隐含层的权重里，只有对应 1 这个位置的权重被激活，这些权重的个数，跟隐含层节点数是一致的，从而这些权重组成一个向量 vx 来表示x，而因为每个词语的 one-hot encoder 里面 1 的位置是不同的，所以，这个向量 vx 就可以用来唯一表示 x。
+
+需要提到一点的是，这个词向量的维度（**与隐含层节点数一致**）一般情况下要远远小于词语总数 V 的大小，所以 Word2vec 本质上是一种**降维**操作——把词语从 one-hot encoder 形式的表示降维到 Word2vec 形式的表示。
+
+##### 2.2 Skip-gram 更一般的情形
+上面讨论的是最简单情形，即 y 只有一个词，当 y 有多个词时，网络结构如下：
+
+![avatar](https://github.com/coderGray1296/code/blob/master/NLP%E5%A4%8D%E4%B9%A0/pictures/word2vec_2.png)
+
+**可以看成是 单个x->单个y 模型的并联，cost function 是单个 cost function 的累加（取log之后）**
+
+##### 2.3 CBOW 更一般的情况
+跟 Skip-gram 相似，只不过: **Skip-gram 是预测一个词的上下文，而 CBOW 是用上下文预测这个词**
+
+![avatar](https://github.com/coderGray1296/code/blob/master/NLP%E5%A4%8D%E4%B9%A0/pictures/word2vec_3.png)
+
+更 Skip-gram 的模型并联不同，这里是输入变成了多个单词，所以要对输入处理下（**一般是求和然后平均**），输出的 cost function 不变
+
+#### 3.Skip-gram 和 CBOW的训练过程及损失函数
+[CBOW](https://blog.csdn.net/u010665216/article/details/78724856)
+[Skip-gram](https://blog.csdn.net/u010665216/article/details/78721354)
